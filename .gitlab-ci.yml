@@ -1,0 +1,26 @@
+stages:
+  - deploy
+  - build
+
+
+bild_test:
+  stage: build
+  image: node:16.13.1-alpine3.14
+  script:
+    - yarn install --frozen-lockfile
+    - yarn build
+
+deploy_to_server:
+  stage: deploy
+  image: node:16.13.1-alpine3.14
+  only:
+    - main
+  script:
+    - apk add openssh
+    - mkdir ~/.ssh
+    - echo "$ssh_private_key" > ~/.ssh/id_rsa
+    - chmod o-rwx ~/.ssh/id_rsa
+    - chmod u=rwx ~/.ssh/id_rsa
+    - chmod g-rwx ~/.ssh/id_rsa
+    - chmod +rx ./cicd/deploy-node-app
+    - ./cicd/deploy-node-app "$server_ip" "$ssh_user"

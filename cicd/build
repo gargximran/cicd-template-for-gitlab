@@ -1,0 +1,41 @@
+#!/bin/bash
+
+echo "-----------------STEP - 1: update repository-----------------"
+sudo apt update -y
+
+echo "-----------------STEP - 2: upgrade repository-----------------"
+sudo apt upgrade -y
+
+
+echo "-----------------STEP - 3: Install nginx if not exists!-----------------"
+[ ! $(nginx -v) ] && sudo apt install nginx -y
+
+
+echo "-----------------STEP - 4: Install node if not exists!-----------------"
+if [ $(node -v | grep -c v) -eq 0 ]
+ then
+    curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+    sudo apt install -y nodejs
+fi
+
+echo "-----------------STEP - 5: Install yarn if not exists!-----------------"
+[ ! $(yarn -v) ] && sudo npm install -g yarn
+
+[ $(pm2 -v) ] && sudo pm2 stop all
+[ $(pm2 -v) ] && sudo pm2 delete all
+[ ! $(pm2 -v) ] && sudo npm install -g pm2
+
+
+echo "-----------------STEP - 8: Move nginx setup file to /etc/nginx/sites-available/default-----------------"
+sudo mv default /etc/nginx/sites-available/default
+
+echo "-----------------STEP - 9: Restart NGINX-----------------"
+sudo systemctl restart nginx
+
+echo "-----------------STEP - 10: Install application dependencies with yarn-----------------"
+sudo yarn install --frozen-lockfile
+sudo yarn build
+sudo yarn start
+
+echo "-----------------STEP - 11: PM2 start-----------------"
+sudo pm2 start "yarn start"

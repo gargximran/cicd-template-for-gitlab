@@ -1,0 +1,16 @@
+deploy_path="~/project/"
+server_ip=$1
+ssh_user=$2
+key_file_path="~/.ssh/id_rsa"
+build_script_file_path="cicd/build"
+
+
+ssh -i $key_file_path -o "StrictHostKeyChecking no" ${ssh_user}@${server_ip} "echo \"checking if directory already exists...\" && [ -d $deploy_path ] && sudo rm -r $deploy_path"
+echo "Cleanup completed!"
+echo "Uploading files to cloud!"
+
+scp -r -i $key_file_path -o "StrictHostKeyChecking no" $(pwd)/ ${ssh_user}@${server_ip}:${deploy_path}
+echo "File uploaded completed!"
+
+echo "Build process started in server"
+ssh -i $key_file_path -o "StrictHostKeyChecking no" ${ssh_user}@${server_ip} "cd ${deploy_path} && sudo chmod 777 $build_script_file_path && ./${build_script_file_path}"
